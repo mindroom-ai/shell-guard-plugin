@@ -1,6 +1,11 @@
 # Shell Guard
 
-Block specific tool calls to prevent agents from running dangerous commands.
+[![Docs](https://img.shields.io/badge/docs-plugins-blue)](https://docs.mindroom.chat/plugins/)
+[![Hooks](https://img.shields.io/badge/docs-hooks-blue)](https://docs.mindroom.chat/hooks/)
+
+<img src="https://raw.githubusercontent.com/mindroom-ai/mindroom/main/frontend/public/logo.png" alt="MindRoom Logo" align="right" width="120" />
+
+Block specific tool calls to prevent [MindRoom](https://github.com/mindroom-ai/mindroom) agents from running dangerous commands.
 
 MindRoom is frequently used to develop MindRoom itself — agents can run shell commands, edit source files, and manage services. This plugin ensures the agent can do *anything* except restart its own service, which would kill all active sessions and conversations.
 
