@@ -1,0 +1,5 @@
+{
+  "name": "shell-guard",
+  "hooks_module": "hooks.py",
+  "skills": []
+}
