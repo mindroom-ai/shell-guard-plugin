@@ -1,25 +1,22 @@
 # Shell Guard
 
-**Example of how to deny specific tool calls in MindRoom.** Use this as a template for building your own tool-call guards.
+Block specific tool calls to prevent agents from running dangerous commands.
 
-MindRoom is frequently used to develop MindRoom itself — agents can run shell commands, edit source files, and manage services. This plugin ensures the agent can do *anything* except restart itself. An agent that restarts its own service kills all active sessions, ongoing conversations, and streaming responses across every room.
+MindRoom is frequently used to develop MindRoom itself — agents can run shell commands, edit source files, and manage services. This plugin ensures the agent can do *anything* except restart its own service, which would kill all active sessions and conversations.
 
-## What it demonstrates
+## How it works
 
-- Hooking `tool:before_call` to intercept tool invocations before execution
-- Pattern-matching on tool arguments to selectively block dangerous commands
-- Returning a decline message that explains *why* the call was blocked
+1. Agent invokes `run_shell_command` with some arguments
+2. The `tool:before_call` hook checks the arguments against a list of blocked patterns
+3. If a match is found, the call is declined with a message explaining why
 
-## Blocked patterns
+Blocked by default: `systemctl restart/stop/disable mindroom-chat` (with or without `sudo`). Add your own patterns to `_BLOCKED_PATTERNS` in `hooks.py`.
 
-- `systemctl restart mindroom-chat`
-- `systemctl stop mindroom-chat`
-- `systemctl disable mindroom-chat`
-- All of the above with `sudo` prefix
+## Hooks
 
-## Extending
-
-Add your own patterns to `_BLOCKED_PATTERNS` in `hooks.py`. For example, you could block `rm -rf /`, `DROP TABLE`, or any other command you want to prevent agents from running.
+| Hook | Event | Purpose |
+|------|-------|---------|
+| `shell_guard` | `tool:before_call` | Intercept and block dangerous shell commands |
 
 ## Setup
 
