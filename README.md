@@ -3,7 +3,7 @@
 [![Docs](https://img.shields.io/badge/docs-plugins-blue)](https://docs.mindroom.chat/plugins/)
 [![Hooks](https://img.shields.io/badge/docs-hooks-blue)](https://docs.mindroom.chat/hooks/)
 
-<img src="https://raw.githubusercontent.com/mindroom-ai/mindroom/main/frontend/public/logo.png" alt="MindRoom Logo" align="right" width="120" />
+<img src="https://media.githubusercontent.com/media/mindroom-ai/mindroom/refs/heads/main/frontend/public/logo.png" alt="MindRoom Logo" align="right" width="120" />
 
 Block specific tool calls to prevent [MindRoom](https://github.com/mindroom-ai/mindroom) agents from running dangerous commands.
 
