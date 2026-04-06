@@ -23,7 +23,7 @@ Add your own patterns to `_BLOCKED_PATTERNS` in `hooks.py`. For example, you cou
 
 ## Setup
 
-1. Copy to `~/.mindroom-chat/plugins/shell-guard`
+1. Copy to `~/.mindroom/plugins/shell-guard`
 2. Add to `config.yaml`:
    ```yaml
    plugins:
