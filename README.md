@@ -8,7 +8,7 @@
 
 Block specific tool calls so [MindRoom](https://github.com/mindroom-ai/mindroom) agents cannot run dangerous shell commands.
 
-MindRoom is often used to develop and operate MindRoom itself. That means agents may legitimately run shell commands, edit files, and inspect services. This plugin narrows one critical safety gap: it prevents an agent from restarting, stopping, or disabling the `mindroom-chat` service that it is currently running inside.
+Agents may legitimately run shell commands, edit files, and inspect services. This plugin narrows one critical safety gap: it prevents an agent from restarting, stopping, or disabling the `mindroom-chat` service that it is currently running inside.
 
 ## Features
 
