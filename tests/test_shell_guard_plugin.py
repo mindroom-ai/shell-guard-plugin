@@ -32,7 +32,7 @@ def _load_hooks_module() -> ModuleType:
 hooks = _load_hooks_module()
 
 
-def _context(tool_name: str, args: list[str]) -> ToolBeforeCallContext:
+def _context(tool_name: str, args: list[str] | str) -> ToolBeforeCallContext:
     return ToolBeforeCallContext(
         tool_name=tool_name,
         arguments={"args": args},
@@ -58,12 +58,13 @@ def test_hook_metadata_targets_tool_preflight() -> None:
     "args",
     [
         ["systemctl", "restart", "mindroom-chat"],
+        "systemctl restart mindroom-chat",
         ["sudo", "systemctl", "stop", "mindroom-chat"],
         ["bash", "-lc", "systemctl disable mindroom-chat"],
     ],
 )
 @pytest.mark.asyncio
-async def test_dangerous_commands_are_declined(args: list[str]) -> None:
+async def test_dangerous_commands_are_declined(args: list[str] | str) -> None:
     """Direct, sudo, and wrapped service mutations should all be blocked."""
     ctx = _context("run_shell_command", args)
 

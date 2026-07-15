@@ -1,3 +1,4 @@
+# ruff: noqa: INP001
 """Shell command guard — blocks dangerous commands.
 
 Blocks agents from restarting the mindroom-chat service.
@@ -19,12 +20,12 @@ _BLOCKED_PATTERNS: list[re.Pattern[str]] = [
 ]
 
 
-def _is_blocked(args_list: list[str]) -> str | None:
+def _is_blocked(args_list: list[str] | str) -> str | None:
     """Check if a command matches any blocked pattern.
 
     Returns the matched pattern string if blocked, None otherwise.
     """
-    cmd = " ".join(str(a) for a in args_list)
+    cmd = args_list if isinstance(args_list, str) else " ".join(str(a) for a in args_list)
     for pattern in _BLOCKED_PATTERNS:
         if pattern.search(cmd):
             return pattern.pattern
