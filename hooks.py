@@ -20,12 +20,17 @@ _BLOCKED_PATTERNS: list[re.Pattern[str]] = [
 ]
 
 
+def _command_text(args_list: list[str] | str) -> str:
+    """Return one readable command string from supported shell arguments."""
+    return args_list if isinstance(args_list, str) else " ".join(str(a) for a in args_list)
+
+
 def _is_blocked(args_list: list[str] | str) -> str | None:
     """Check if a command matches any blocked pattern.
 
     Returns the matched pattern string if blocked, None otherwise.
     """
-    cmd = args_list if isinstance(args_list, str) else " ".join(str(a) for a in args_list)
+    cmd = _command_text(args_list)
     for pattern in _BLOCKED_PATTERNS:
         if pattern.search(cmd):
             return pattern.pattern
@@ -48,8 +53,9 @@ async def guard_shell_commands(ctx: ToolBeforeCallContext) -> None:
 
     matched = _is_blocked(args)
     if matched:
+        command = _command_text(args)
         reason = (
-            f"🚫 BLOCKED: You attempted `{' '.join(str(a) for a in args)}` "
+            f"🚫 BLOCKED: You attempted `{command}` "
             f"which matches forbidden pattern `{matched}`. "
             f"Agents must NEVER restart, stop, or disable the mindroom-chat "
             f"service — doing so kills your own process and leaves the system "

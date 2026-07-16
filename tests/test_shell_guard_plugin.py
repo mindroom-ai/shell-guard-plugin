@@ -72,7 +72,8 @@ async def test_dangerous_commands_are_declined(args: list[str] | str) -> None:
 
     assert ctx.declined is True
     assert "🚫 BLOCKED" in ctx.decline_reason
-    assert "mindroom-chat" in ctx.decline_reason
+    command = args if isinstance(args, str) else " ".join(args)
+    assert f"You attempted `{command}`" in ctx.decline_reason
 
 
 @pytest.mark.asyncio
