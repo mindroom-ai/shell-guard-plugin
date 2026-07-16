@@ -60,6 +60,7 @@ def test_hook_metadata_targets_tool_preflight() -> None:
         ["systemctl", "restart", "mindroom-chat"],
         "systemctl restart mindroom-chat",
         ["sudo", "systemctl", "stop", "mindroom-chat"],
+        "sudo systemctl stop mindroom-chat",
         ["bash", "-lc", "systemctl disable mindroom-chat"],
     ],
 )
