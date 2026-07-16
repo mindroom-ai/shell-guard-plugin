@@ -42,6 +42,31 @@ Blocked by default:
 
 To block additional commands, add more regex patterns to `_BLOCKED_PATTERNS` in [hooks.py](hooks.py).
 
+## Install
+
+Vendor this plugin with the MindRoom CLI:
+
+```bash
+mindroom plugins install shell-guard-plugin
+```
+
+Then reference it from `config.yaml`:
+
+```yaml
+plugins:
+  - path: plugins/shell-guard-plugin
+```
+
+Update to the latest commit later with:
+
+```bash
+mindroom plugins update shell-guard-plugin
+```
+
+The command pins the exact installed commit in `.mindroom-plugin.lock.json` and strictly validates the plugin before activating it.
+It requires a MindRoom release newer than v2026.7.175.
+For a manual checkout instead, see Setup below.
+
 ## Setup
 
 1. Copy this plugin to `~/.mindroom/plugins/shell-guard`.
