@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from mindroom.config.main import Config
+from mindroom.constants import resolve_runtime_paths
 from mindroom.hooks import ToolBeforeCallContext
 from mindroom.hooks.decorators import get_hook_metadata
 
@@ -30,6 +32,8 @@ def _load_hooks_module() -> ModuleType:
 
 
 hooks = _load_hooks_module()
+# The runtime paths a before-call context carries; the guard never reads them.
+_RUNTIME_PATHS = resolve_runtime_paths(config_path=Path("/nonexistent/shell-guard/config.yaml"), process_env={})
 
 
 def _context(tool_name: str, args: list[str] | str) -> ToolBeforeCallContext:
@@ -41,6 +45,9 @@ def _context(tool_name: str, args: list[str] | str) -> ToolBeforeCallContext:
         thread_id="$thread-root",
         requester_id="@user:localhost",
         session_id="session-1",
+        config=Config(),
+        runtime_paths=_RUNTIME_PATHS,
+        correlation_id="corr-shell-guard",
     )
 
 
