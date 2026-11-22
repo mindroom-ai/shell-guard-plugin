@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import re
 
-from mindroom.hooks import ToolBeforeCallContext, hook
+from mindroom.plugin_api import ToolBeforeCallContext, hook
 
 _log = logging.getLogger(__name__)
 

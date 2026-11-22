@@ -10,10 +10,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from mindroom.config.main import Config
 from mindroom.constants import resolve_runtime_paths
-from mindroom.hooks import ToolBeforeCallContext
 from mindroom.hooks.decorators import get_hook_metadata
+from mindroom.plugin_api import Config, ToolBeforeCallContext
 
 if TYPE_CHECKING:
     from types import ModuleType
