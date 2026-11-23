@@ -36,7 +36,7 @@ plugins:
 ```
 
 Update later with `mindroom plugins update shell-guard-plugin`.
-Requires MindRoom plugin API 1.2 or later.
+Needs MindRoom v2026.11.187 or later (plugin API 1.2).
 
 ## Settings
 
