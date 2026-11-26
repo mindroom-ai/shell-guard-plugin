@@ -63,8 +63,8 @@ def test_hook_metadata_targets_tool_preflight() -> None:
 @pytest.mark.parametrize(
     "args",
     [
-        ["systemctl", "restart", "mindroom-chat"],
-        "systemctl restart mindroom-chat",
+        ["systemctl", "stop", "mindroom-chat"],
+        "systemctl stop mindroom-chat",
         ["sudo", "systemctl", "stop", "mindroom-chat"],
         "sudo systemctl stop mindroom-chat",
         ["bash", "-lc", "systemctl disable mindroom-chat"],
@@ -83,10 +83,20 @@ async def test_dangerous_commands_are_declined(args: list[str] | str) -> None:
     assert f"You attempted `{command}`" in ctx.decline_reason
 
 
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["systemctl", "status", "mindroom-chat"],
+        ["systemctl", "restart", "mindroom-chat"],
+        "systemctl restart mindroom-chat",
+        ["sudo", "systemctl", "restart", "mindroom-chat"],
+        ["bash", "-lc", "systemctl restart mindroom-chat"],
+    ],
+)
 @pytest.mark.asyncio
-async def test_safe_shell_command_is_allowed() -> None:
-    """Unrelated shell commands should remain executable."""
-    ctx = _context("run_shell_command", ["systemctl", "status", "mindroom-chat"])
+async def test_safe_shell_command_is_allowed(args: list[str] | str) -> None:
+    """Read-only commands and restarts should remain executable."""
+    ctx = _context("run_shell_command", args)
 
     await hooks.guard_shell_commands(ctx)
 
@@ -97,7 +107,7 @@ async def test_safe_shell_command_is_allowed() -> None:
 @pytest.mark.asyncio
 async def test_non_shell_tool_is_ignored() -> None:
     """Blocked-looking arguments on another tool should not be declined."""
-    ctx = _context("other_tool", ["systemctl", "restart", "mindroom-chat"])
+    ctx = _context("other_tool", ["systemctl", "stop", "mindroom-chat"])
 
     await hooks.guard_shell_commands(ctx)
 

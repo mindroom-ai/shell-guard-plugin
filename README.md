@@ -10,18 +10,18 @@
   <img src="https://raw.githubusercontent.com/mindroom-ai/mindroom/main/assets/logo/logo-mark.svg" alt="MindRoom Logo" align="right" width="120" />
 </picture>
 
-A [MindRoom](https://github.com/mindroom-ai/mindroom) hook plugin that stops agents from accidentally restarting, stopping, or disabling the `mindroom-chat` systemd service they run inside.
+A [MindRoom](https://github.com/mindroom-ai/mindroom) hook plugin that stops agents from accidentally stopping or disabling the `mindroom-chat` systemd service they run inside.
 
 When an agent invokes `run_shell_command` with a blocked command, the hook intercepts it before execution and declines the call with an explicit explanation:
 
 ```text
-run_shell_command(args=["systemctl", "restart", "mindroom-chat"])
-→ 🚫 BLOCKED: You attempted `systemctl restart mindroom-chat` which matches forbidden pattern `systemctl\s+(restart|stop|disable)\s+mindroom-chat`. Agents must NEVER restart, stop, or disable the mindroom-chat service — doing so kills your own process and leaves the system unrecoverable until Bas manually intervenes. Only Bas should restart this service by hand. Do NOT retry this command or attempt workarounds.
+run_shell_command(args=["systemctl", "stop", "mindroom-chat"])
+→ 🚫 BLOCKED: You attempted `systemctl stop mindroom-chat` which matches forbidden pattern `systemctl\s+(stop|disable)\s+mindroom-chat`. Agents must NEVER stop or disable the mindroom-chat service — doing so takes the service offline and leaves the system unrecoverable until Bas manually intervenes. Only Bas should stop or disable this service by hand. Do NOT retry this command or attempt workarounds.
 ```
 
 - **Pre-execution check:** intercepts `run_shell_command` on `tool:before_call` (1-second hook timeout) before anything runs.
 - **Catches common variants:** matches direct commands, `sudo` invocations, and shell wrappers such as `bash -lc`.
-- **Safe commands pass through:** read-only commands like `systemctl status mindroom-chat` and all other tools run normally.
+- **Allowed commands pass through:** commands like `systemctl status mindroom-chat`, `systemctl restart mindroom-chat`, and all other tools run normally.
 
 ## Quick start
 
@@ -44,7 +44,6 @@ This plugin does not read YAML `settings:` yet—no extra config keys or agent t
 
 Blocked by default (direct, with `sudo`, or inside a shell wrapper):
 
-- `systemctl restart mindroom-chat`
 - `systemctl stop mindroom-chat`
 - `systemctl disable mindroom-chat`
 
@@ -57,8 +56,8 @@ If your service uses a different unit name or you want to block other commands, 
 
 ```python
 _BLOCKED_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(r"systemctl\s+(restart|stop|disable)\s+my-mindroom-service"),
-    re.compile(r"sudo\s+systemctl\s+(restart|stop|disable)\s+my-mindroom-service"),
+    re.compile(r"systemctl\s+(stop|disable)\s+my-mindroom-service"),
+    re.compile(r"sudo\s+systemctl\s+(stop|disable)\s+my-mindroom-service"),
 ]
 ```
 

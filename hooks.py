@@ -1,7 +1,7 @@
 # ruff: noqa: INP001
 """Shell command guard — blocks dangerous commands.
 
-Blocks agents from restarting the mindroom-chat service.
+Blocks agents from stopping or disabling the mindroom-chat service.
 """
 
 from __future__ import annotations
@@ -13,10 +13,10 @@ from mindroom.plugin_api import ToolBeforeCallContext, hook
 
 _log = logging.getLogger(__name__)
 
-# Only block direct service restarts of mindroom-chat
+# Only block stopping or disabling mindroom-chat (restarts are allowed)
 _BLOCKED_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(r"systemctl\s+(restart|stop|disable)\s+mindroom-chat"),
-    re.compile(r"sudo\s+systemctl\s+(restart|stop|disable)\s+mindroom-chat"),
+    re.compile(r"systemctl\s+(stop|disable)\s+mindroom-chat"),
+    re.compile(r"sudo\s+systemctl\s+(stop|disable)\s+mindroom-chat"),
 ]
 
 
@@ -57,10 +57,10 @@ async def guard_shell_commands(ctx: ToolBeforeCallContext) -> None:
         reason = (
             f"🚫 BLOCKED: You attempted `{command}` "
             f"which matches forbidden pattern `{matched}`. "
-            f"Agents must NEVER restart, stop, or disable the mindroom-chat "
-            f"service — doing so kills your own process and leaves the system "
+            f"Agents must NEVER stop or disable the mindroom-chat "
+            f"service — doing so takes the service offline and leaves the system "
             f"unrecoverable until Bas manually intervenes. "
-            f"Only Bas should restart this service by hand. "
+            f"Only Bas should stop or disable this service by hand. "
             f"Do NOT retry this command or attempt workarounds."
         )
         _log.warning(
