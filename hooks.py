@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 import re
-from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from mindroom.plugin_api import ToolBeforeCallContext, hook
@@ -28,14 +27,8 @@ _DEFAULT_REASON = (
 )
 
 
-@lru_cache(maxsize=256)
-def _compile_pattern(pattern: str) -> re.Pattern[str]:
-    """Compile and cache one regex pattern."""
-    return re.compile(pattern)
-
-
 _DEFAULT_BLOCKED_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
-    _compile_pattern(pattern) for pattern in _DEFAULT_BLOCKED_PATTERN_STRINGS
+    re.compile(pattern) for pattern in _DEFAULT_BLOCKED_PATTERN_STRINGS
 )
 
 
@@ -57,7 +50,7 @@ def _blocked_patterns(settings: Mapping[str, object] | None) -> tuple[re.Pattern
             _log.warning("shell-guard: ignoring invalid blocked_patterns entry %r", entry)
             continue
         try:
-            compiled.append(_compile_pattern(entry))
+            compiled.append(re.compile(entry))
         except re.error as exc:
             _log.warning("shell-guard: ignoring invalid regex %r: %s", entry, exc)
 
@@ -69,10 +62,12 @@ def _blocked_patterns(settings: Mapping[str, object] | None) -> tuple[re.Pattern
 
 def _decline_detail(settings: Mapping[str, object] | None) -> str:
     """Return the configured decline reason suffix, or the default message."""
-    if settings:
-        configured = settings.get("reason")
-        if isinstance(configured, str) and configured.strip():
-            return configured.strip()
+    if not settings or "reason" not in settings or settings["reason"] is None:
+        return _DEFAULT_REASON
+    configured = settings["reason"]
+    if isinstance(configured, str) and configured.strip():
+        return configured.strip()
+    _log.warning("shell-guard: reason must be a non-empty string; using default")
     return _DEFAULT_REASON
 
 

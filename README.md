@@ -45,7 +45,7 @@ All settings are optional. With no `settings:` block, the guard blocks `systemct
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `blocked_patterns` | `list[str]` | `['systemctl\s+(stop\|disable)\s+mindroom-chat']` | Regex patterns checked via `re.search` against the command text. Replaces the default list when set; pass `[]` to disable blocking. Malformed configs fall back to the defaults. |
+| `blocked_patterns` | `list[str]` | `['systemctl\s+(stop\|disable)\s+mindroom-chat']` | Regex patterns checked via `re.search` against the command text. Replaces the default list when set; pass `[]` to disable blocking. Invalid entries in a mixed list are skipped while valid ones still apply; a non-list value or a non-empty list with no valid patterns falls back to the defaults. |
 | `reason` | `str` | Built-in warning | Custom explanation appended to the decline message. |
 
 ```yaml
