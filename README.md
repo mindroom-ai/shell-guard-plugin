@@ -10,18 +10,19 @@
   <img src="https://raw.githubusercontent.com/mindroom-ai/mindroom/main/assets/logo/logo-mark.svg" alt="MindRoom Logo" align="right" width="120" />
 </picture>
 
-A [MindRoom](https://github.com/mindroom-ai/mindroom) hook plugin that stops agents from accidentally stopping or disabling the `mindroom-chat` systemd service they run inside.
+A [MindRoom](https://github.com/mindroom-ai/mindroom) hook plugin that blocks agents from running dangerous shell commands matching configured regex patterns (by default, stopping or disabling the `mindroom-chat` systemd service).
 
 When an agent invokes `run_shell_command` with a blocked command, the hook intercepts it before execution and declines the call with an explicit explanation:
 
 ```text
 run_shell_command(args=["systemctl", "stop", "mindroom-chat"])
-→ 🚫 BLOCKED: You attempted `systemctl stop mindroom-chat` which matches forbidden pattern `systemctl\s+(stop|disable)\s+mindroom-chat`. Agents must NEVER stop or disable the mindroom-chat service — doing so takes the service offline and leaves the system unrecoverable until Bas manually intervenes. Only Bas should stop or disable this service by hand. Do NOT retry this command or attempt workarounds.
+→ 🚫 BLOCKED: You attempted `systemctl stop mindroom-chat` which matches forbidden pattern `systemctl\s+(stop|disable)\s+mindroom-chat`. Agents must NEVER stop or disable the mindroom-chat service — doing so leaves the service offline or disabled until a human manually intervenes. Do NOT retry this command or attempt workarounds.
 ```
 
 - **Pre-execution check:** intercepts `run_shell_command` on `tool:before_call` (1-second hook timeout) before anything runs.
 - **Catches common variants:** matches direct commands, `sudo` invocations, and shell wrappers such as `bash -lc`.
-- **Allowed commands pass through:** commands like `systemctl status mindroom-chat`, `systemctl restart mindroom-chat`, and all other tools run normally.
+- **Configurable in YAML:** customize `blocked_patterns` and `reason` via plugin `settings:` without forking `hooks.py`.
+- **Allowed commands pass through:** commands like `systemctl status mindroom-chat`, `systemctl restart mindroom-chat`, and all other tools run normally by default.
 
 ## Quick start
 
@@ -40,33 +41,29 @@ Needs MindRoom v2026.11.187 or later (plugin API 1.2).
 
 ## Settings
 
-This plugin does not read YAML `settings:` yet—no extra config keys or agent tools are needed. The default unit name (`mindroom-chat`), regex patterns (`_BLOCKED_PATTERNS`), and decline message live directly in [hooks.py](hooks.py).
+All settings are optional. With no `settings:` block, the guard blocks `systemctl stop mindroom-chat` and `systemctl disable mindroom-chat` (direct, with `sudo`, or inside a shell wrapper) and allows `systemctl restart mindroom-chat`.
 
-Blocked by default (direct, with `sudo`, or inside a shell wrapper):
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `blocked_patterns` | `list[str]` | `['systemctl\s+(stop\|disable)\s+mindroom-chat']` | Regex patterns checked via `re.search` against the command text. Replaces the default list when set; pass `[]` to disable blocking. Malformed configs fall back to the defaults. |
+| `reason` | `str` | Built-in warning | Custom explanation appended to the decline message. |
 
-- `systemctl stop mindroom-chat`
-- `systemctl disable mindroom-chat`
-
-<details>
-<summary><b>Customization and limits</b></summary>
-
-### Customizing rules and message
-
-If your service uses a different unit name or you want to block other commands, edit `_BLOCKED_PATTERNS` and the `reason` string in [hooks.py](hooks.py) (in your installed `plugins/shell-guard-plugin/` directory, or a manual checkout placed at `plugins/shell-guard-plugin` next to your `config.yaml`):
-
-```python
-_BLOCKED_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(r"systemctl\s+(stop|disable)\s+my-mindroom-service"),
-    re.compile(r"sudo\s+systemctl\s+(stop|disable)\s+my-mindroom-service"),
-]
+```yaml
+plugins:
+  - path: plugins/shell-guard-plugin
+    required: true
+    settings:
+      blocked_patterns:
+        - 'systemctl\s+(restart|stop|disable)\s+my-mindroom-service'
+        - 'rm\s+-rf\s+/'
+      reason: "Ask an operator before running destructive service or filesystem commands."
 ```
 
-Running `mindroom plugins update shell-guard-plugin` replaces the vendored copy from upstream, so keep custom rules in your own fork or manual checkout.
-
-### Scope limits
+<details>
+<summary><b>Scope limits</b></summary>
 
 - **Accidental-footgun guardrail, not a security sandbox:** the hook runs a case-sensitive regex substring check (`re.Pattern.search`) against `run_shell_command`'s `args` argument (joined with spaces when passed as a list).
-- **Single tool only:** only `run_shell_command` is inspected; other tools, indirect scripts, or altered invocations (flags between `systemctl` and the subcommand, shell variables, alternate unit names, `kill`, etc.) are not matched by the default patterns.
+- **Single tool only:** only `run_shell_command` is inspected; other tools, indirect scripts, or altered invocations (flags between `systemctl` and the subcommand, shell variables, alternate unit names, `kill`, etc.) are not matched unless covered by your configured patterns.
 
 </details>
 

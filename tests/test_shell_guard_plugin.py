@@ -6,7 +6,7 @@ from __future__ import annotations
 import sys
 from importlib import util
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -35,7 +35,12 @@ hooks = _load_hooks_module()
 _RUNTIME_PATHS = resolve_runtime_paths(config_path=Path("/nonexistent/shell-guard/config.yaml"), process_env={})
 
 
-def _context(tool_name: str, args: list[str] | str) -> ToolBeforeCallContext:
+def _context(
+    tool_name: str,
+    args: list[str] | str,
+    *,
+    settings: dict[str, Any] | None = None,
+) -> ToolBeforeCallContext:
     return ToolBeforeCallContext(
         tool_name=tool_name,
         arguments={"args": args},
@@ -47,6 +52,7 @@ def _context(tool_name: str, args: list[str] | str) -> ToolBeforeCallContext:
         config=Config(),
         runtime_paths=_RUNTIME_PATHS,
         correlation_id="corr-shell-guard",
+        settings=settings or {},
     )
 
 
@@ -95,7 +101,7 @@ async def test_dangerous_commands_are_declined(args: list[str] | str) -> None:
 )
 @pytest.mark.asyncio
 async def test_safe_shell_command_is_allowed(args: list[str] | str) -> None:
-    """Read-only commands and restarts should remain executable."""
+    """Read-only commands and restarts should remain executable by default."""
     ctx = _context("run_shell_command", args)
 
     await hooks.guard_shell_commands(ctx)
@@ -112,3 +118,60 @@ async def test_non_shell_tool_is_ignored() -> None:
     await hooks.guard_shell_commands(ctx)
 
     assert ctx.declined is False
+
+
+@pytest.mark.asyncio
+async def test_custom_blocked_patterns_and_reason() -> None:
+    """Custom settings override default patterns and decline reason."""
+    settings = {
+        "blocked_patterns": [r"systemctl\s+(restart|stop)\s+my-service", r"rm\s+-rf\s+/"],
+        "reason": "Ask an operator before touching my-service.",
+    }
+
+    blocked = _context("run_shell_command", "sudo systemctl restart my-service", settings=settings)
+    await hooks.guard_shell_commands(blocked)
+    assert blocked.declined is True
+    assert "Ask an operator before touching my-service." in blocked.decline_reason
+
+    # Default mindroom-chat pattern is replaced when blocked_patterns is set.
+    replaced = _context("run_shell_command", "systemctl stop mindroom-chat", settings=settings)
+    await hooks.guard_shell_commands(replaced)
+    assert replaced.declined is False
+
+
+@pytest.mark.asyncio
+async def test_empty_blocked_patterns_allows_everything() -> None:
+    """An explicit empty blocked_patterns list disables blocking."""
+    ctx = _context("run_shell_command", "systemctl stop mindroom-chat", settings={"blocked_patterns": []})
+
+    await hooks.guard_shell_commands(ctx)
+
+    assert ctx.declined is False
+
+
+@pytest.mark.parametrize(
+    "bad_settings",
+    [
+        {"blocked_patterns": "not-a-list"},
+        {"blocked_patterns": ["[unclosed-regex"]},
+        {"blocked_patterns": [123, "   "]},
+    ],
+)
+@pytest.mark.asyncio
+async def test_invalid_blocked_patterns_falls_back_to_defaults(bad_settings: dict[str, Any]) -> None:
+    """Malformed blocked_patterns settings should fail safe to default rules."""
+    ctx = _context("run_shell_command", "systemctl stop mindroom-chat", settings=bad_settings)
+
+    await hooks.guard_shell_commands(ctx)
+
+    assert ctx.declined is True
+
+
+@pytest.mark.asyncio
+async def test_partial_invalid_blocked_patterns_keeps_valid_ones() -> None:
+    """Valid patterns in blocked_patterns still apply when another entry is invalid."""
+    settings = {"blocked_patterns": ["[unclosed-regex", r"docker\s+stop"]}
+
+    blocked = _context("run_shell_command", "docker stop db", settings=settings)
+    await hooks.guard_shell_commands(blocked)
+    assert blocked.declined is True
